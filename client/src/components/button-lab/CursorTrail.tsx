@@ -17,7 +17,6 @@ interface Point {
   alpha: number;
   timestamp: number;
   isClick?: boolean;
-  scrollY: number; // Сохраняем позицию прокрутки для каждой точки
 }
 
 export function CursorTrail() {
@@ -53,11 +52,21 @@ export function CursorTrail() {
       canvas.height = window.innerHeight;
     };
 
+    const getViewportCoordinates = (e: MouseEvent) => {
+      // Convert page coordinates to viewport coordinates
+      return {
+        x: e.clientX,
+        y: e.clientY
+      };
+    };
+
     const handleMouseMove = (e: MouseEvent) => {
       if (!isRecording) return;
 
       const timestamp = Date.now();
-      behaviorAnalyzer.addPoint(e.pageX, e.pageY, timestamp);
+      const coords = getViewportCoordinates(e);
+
+      behaviorAnalyzer.addPoint(coords.x, coords.y, timestamp);
       const newBehaviorMetrics = behaviorAnalyzer.analyzeBehavior();
       const humanScore = botDetector.calculateHumanScore();
 
@@ -67,12 +76,11 @@ export function CursorTrail() {
       });
 
       pointsRef.current.push({
-        x: e.pageX,
-        y: e.pageY,
+        x: coords.x,
+        y: coords.y,
         alpha: 1,
         timestamp,
-        isClick: false,
-        scrollY: window.scrollY
+        isClick: false
       });
     };
 
@@ -80,7 +88,9 @@ export function CursorTrail() {
       if (!isRecording) return;
 
       const timestamp = Date.now();
-      behaviorAnalyzer.addPoint(e.pageX, e.pageY, timestamp);
+      const coords = getViewportCoordinates(e);
+
+      behaviorAnalyzer.addPoint(coords.x, coords.y, timestamp);
       const newBehaviorMetrics = behaviorAnalyzer.analyzeBehavior();
       const humanScore = botDetector.calculateHumanScore();
 
@@ -90,12 +100,11 @@ export function CursorTrail() {
       });
 
       pointsRef.current.push({
-        x: e.pageX,
-        y: e.pageY,
+        x: coords.x,
+        y: coords.y,
         alpha: 1,
         timestamp,
-        isClick: true,
-        scrollY: window.scrollY
+        isClick: true
       });
     };
 
@@ -104,21 +113,16 @@ export function CursorTrail() {
 
       if (pointsRef.current.length > 1) {
         ctx.beginPath();
-        // Учитываем прокрутку при отрисовке первой точки
-        const firstPoint = pointsRef.current[0];
-        ctx.moveTo(firstPoint.x, firstPoint.y - (firstPoint.scrollY - window.scrollY));
+        ctx.moveTo(pointsRef.current[0].x, pointsRef.current[0].y);
 
         for (let i = 1; i < pointsRef.current.length; i++) {
           const point = pointsRef.current[i];
           const prevPoint = pointsRef.current[i - 1];
-          // Корректируем координаты Y с учетом прокрутки
-          const adjustedY = point.y - (point.scrollY - window.scrollY);
-          const prevAdjustedY = prevPoint.y - (prevPoint.scrollY - window.scrollY);
 
           if (point.timestamp - prevPoint.timestamp < 100) {
-            ctx.lineTo(point.x, adjustedY);
+            ctx.lineTo(point.x, point.y);
           } else {
-            ctx.moveTo(point.x, adjustedY);
+            ctx.moveTo(point.x, point.y);
           }
         }
 
@@ -129,20 +133,17 @@ export function CursorTrail() {
 
       for (let i = 0; i < pointsRef.current.length; i++) {
         const point = pointsRef.current[i];
-        // Корректируем координату Y с учетом текущей прокрутки
-        const adjustedY = point.y - (point.scrollY - window.scrollY);
-
         ctx.beginPath();
 
         if (point.isClick) {
-          ctx.arc(point.x, adjustedY, 8, 0, Math.PI * 2);
+          ctx.arc(point.x, point.y, 8, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(255, 0, 0, ${point.alpha})`;
 
           ctx.strokeStyle = `rgba(255, 255, 255, ${point.alpha})`;
           ctx.lineWidth = 2;
           ctx.stroke();
         } else {
-          ctx.arc(point.x, adjustedY, 3, 0, Math.PI * 2);
+          ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(33, 150, 243, ${point.alpha})`;
         }
 
@@ -179,6 +180,13 @@ export function CursorTrail() {
       <canvas
         ref={canvasRef}
         className="fixed inset-0 pointer-events-none z-50"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          pointerEvents: 'none',
+          zIndex: 50
+        }}
       />
       <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
         <Card className="w-64 bg-background/80 backdrop-blur-sm">

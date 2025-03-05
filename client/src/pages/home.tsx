@@ -3,6 +3,7 @@ import { CursorTrail } from "@/components/button-lab/CursorTrail";
 import { InteractionLog } from "@/components/button-lab/InteractionLog";
 import { MultiStepForm } from "@/components/button-lab/MultiStepForm";
 import { SimpleForm } from "@/components/button-lab/SimpleForm";
+import { BehaviorMetrics } from "@/components/button-lab/BehaviorMetrics";
 
 export default function Home() {
   return (
@@ -29,8 +30,11 @@ export default function Home() {
             </div>
 
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold">Interaction Log</h2>
-              <InteractionLog />
+              <h2 className="text-xl font-semibold">Analysis</h2>
+              <div className="grid gap-4">
+                <BehaviorMetrics />
+                <InteractionLog />
+              </div>
             </div>
           </div>
 

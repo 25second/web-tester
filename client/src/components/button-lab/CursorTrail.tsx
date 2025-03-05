@@ -17,6 +17,7 @@ interface Point {
   alpha: number;
   timestamp: number;
   isClick?: boolean;
+  scrollY: number; // Сохраняем позицию прокрутки для каждой точки
 }
 
 export function CursorTrail() {
@@ -48,8 +49,8 @@ export function CursorTrail() {
     if (!ctx) return;
 
     const resizeCanvas = () => {
-      canvas.width = document.documentElement.scrollWidth;
-      canvas.height = document.documentElement.scrollHeight;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -70,7 +71,8 @@ export function CursorTrail() {
         y: e.pageY,
         alpha: 1,
         timestamp,
-        isClick: false
+        isClick: false,
+        scrollY: window.scrollY
       });
     };
 
@@ -92,12 +94,9 @@ export function CursorTrail() {
         y: e.pageY,
         alpha: 1,
         timestamp,
-        isClick: true
+        isClick: true,
+        scrollY: window.scrollY
       });
-    };
-
-    const handleScroll = () => {
-      resizeCanvas();
     };
 
     const animate = () => {
@@ -105,16 +104,21 @@ export function CursorTrail() {
 
       if (pointsRef.current.length > 1) {
         ctx.beginPath();
-        ctx.moveTo(pointsRef.current[0].x, pointsRef.current[0].y);
+        // Учитываем прокрутку при отрисовке первой точки
+        const firstPoint = pointsRef.current[0];
+        ctx.moveTo(firstPoint.x, firstPoint.y - (firstPoint.scrollY - window.scrollY));
 
         for (let i = 1; i < pointsRef.current.length; i++) {
           const point = pointsRef.current[i];
           const prevPoint = pointsRef.current[i - 1];
+          // Корректируем координаты Y с учетом прокрутки
+          const adjustedY = point.y - (point.scrollY - window.scrollY);
+          const prevAdjustedY = prevPoint.y - (prevPoint.scrollY - window.scrollY);
 
           if (point.timestamp - prevPoint.timestamp < 100) {
-            ctx.lineTo(point.x, point.y);
+            ctx.lineTo(point.x, adjustedY);
           } else {
-            ctx.moveTo(point.x, point.y);
+            ctx.moveTo(point.x, adjustedY);
           }
         }
 
@@ -125,17 +129,20 @@ export function CursorTrail() {
 
       for (let i = 0; i < pointsRef.current.length; i++) {
         const point = pointsRef.current[i];
+        // Корректируем координату Y с учетом текущей прокрутки
+        const adjustedY = point.y - (point.scrollY - window.scrollY);
+
         ctx.beginPath();
 
         if (point.isClick) {
-          ctx.arc(point.x, point.y, 8, 0, Math.PI * 2);
+          ctx.arc(point.x, adjustedY, 8, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(255, 0, 0, ${point.alpha})`;
 
           ctx.strokeStyle = `rgba(255, 255, 255, ${point.alpha})`;
           ctx.lineWidth = 2;
           ctx.stroke();
         } else {
-          ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
+          ctx.arc(point.x, adjustedY, 3, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(33, 150, 243, ${point.alpha})`;
         }
 
@@ -151,7 +158,6 @@ export function CursorTrail() {
     };
 
     window.addEventListener("resize", resizeCanvas);
-    window.addEventListener("scroll", handleScroll);
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("click", handleClick);
     resizeCanvas();
@@ -159,7 +165,6 @@ export function CursorTrail() {
 
     return () => {
       window.removeEventListener("resize", resizeCanvas);
-      window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("click", handleClick);
     };

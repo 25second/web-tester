@@ -100,6 +100,7 @@ export function CursorTrail() {
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // Draw paths
       if (pointsRef.current.length > 1) {
         ctx.beginPath();
         ctx.moveTo(pointsRef.current[0].x, pointsRef.current[0].y);
@@ -120,6 +121,7 @@ export function CursorTrail() {
         ctx.stroke();
       }
 
+      // Draw points and clicks
       for (let i = 0; i < pointsRef.current.length; i++) {
         const point = pointsRef.current[i];
         ctx.beginPath();

@@ -55,7 +55,7 @@ export function CursorTrail() {
       if (!isRecording) return;
 
       const timestamp = Date.now();
-      behaviorAnalyzer.addPoint(e.clientX, e.clientY, timestamp);
+      behaviorAnalyzer.addPoint(e.pageX, e.pageY, timestamp);
       const newBehaviorMetrics = behaviorAnalyzer.analyzeBehavior();
       const humanScore = botDetector.calculateHumanScore();
 
@@ -65,8 +65,8 @@ export function CursorTrail() {
       });
 
       pointsRef.current.push({
-        x: e.clientX,
-        y: e.clientY,
+        x: e.pageX,
+        y: e.pageY,
         alpha: 1,
         timestamp,
         isClick: false
@@ -77,7 +77,7 @@ export function CursorTrail() {
       if (!isRecording) return;
 
       const timestamp = Date.now();
-      behaviorAnalyzer.addPoint(e.clientX, e.clientY, timestamp);
+      behaviorAnalyzer.addPoint(e.pageX, e.pageY, timestamp);
       const newBehaviorMetrics = behaviorAnalyzer.analyzeBehavior();
       const humanScore = botDetector.calculateHumanScore();
 
@@ -87,8 +87,8 @@ export function CursorTrail() {
       });
 
       pointsRef.current.push({
-        x: e.clientX,
-        y: e.clientY,
+        x: e.pageX,
+        y: e.pageY,
         alpha: 1,
         timestamp,
         isClick: true
@@ -99,6 +99,10 @@ export function CursorTrail() {
       if (!ctx || !canvas) return;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Apply scroll offset transform
+      ctx.save();
+      ctx.translate(0, -window.scrollY);
 
       // Draw paths
       if (pointsRef.current.length > 1) {
@@ -145,6 +149,8 @@ export function CursorTrail() {
           point.alpha - (point.isClick ? 0.002 : 0.001)
         );
       }
+
+      ctx.restore();
 
       requestAnimationFrame(animate);
     };

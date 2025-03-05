@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eraser, Activity } from "lucide-react";
 import { behaviorAnalyzer } from "@/lib/behaviorAnalysis";
+import { botDetector } from "@/lib/botDetection";
 import {
   Card,
   CardContent,
@@ -24,8 +25,19 @@ export function CursorTrail() {
   const [metrics, setMetrics] = useState({
     naturalness: 1,
     jitterAmount: 0,
-    pathEfficiency: 1
+    pathEfficiency: 1,
+    humanScore: 1,
   });
+
+  useEffect(() => {
+    // Initialize bot detection
+    botDetector.initialize().then(() => {
+      setMetrics(prev => ({
+        ...prev,
+        humanScore: botDetector.calculateHumanScore()
+      }));
+    });
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -44,8 +56,13 @@ export function CursorTrail() {
 
       const timestamp = Date.now();
       behaviorAnalyzer.addPoint(e.clientX, e.clientY, timestamp);
-      const newMetrics = behaviorAnalyzer.analyzeBehavior();
-      setMetrics(newMetrics);
+      const newBehaviorMetrics = behaviorAnalyzer.analyzeBehavior();
+      const humanScore = botDetector.calculateHumanScore();
+
+      setMetrics({
+        ...newBehaviorMetrics,
+        humanScore
+      });
 
       pointsRef.current.push({
         x: e.clientX,
@@ -60,8 +77,13 @@ export function CursorTrail() {
 
       const timestamp = Date.now();
       behaviorAnalyzer.addPoint(e.clientX, e.clientY, timestamp);
-      const newMetrics = behaviorAnalyzer.analyzeBehavior();
-      setMetrics(newMetrics);
+      const newBehaviorMetrics = behaviorAnalyzer.analyzeBehavior();
+      const humanScore = botDetector.calculateHumanScore();
+
+      setMetrics({
+        ...newBehaviorMetrics,
+        humanScore
+      });
 
       pointsRef.current.push({
         x: e.clientX,
@@ -74,7 +96,6 @@ export function CursorTrail() {
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw lines between points
       if (pointsRef.current.length > 1) {
         ctx.beginPath();
         ctx.moveTo(pointsRef.current[0].x, pointsRef.current[0].y);
@@ -83,7 +104,6 @@ export function CursorTrail() {
           const point = pointsRef.current[i];
           const prevPoint = pointsRef.current[i - 1];
 
-          // Only connect points that are close in time (within 100ms)
           if (point.timestamp - prevPoint.timestamp < 100) {
             ctx.lineTo(point.x, point.y);
           } else {
@@ -96,7 +116,6 @@ export function CursorTrail() {
         ctx.stroke();
       }
 
-      // Draw points
       for (let i = 0; i < pointsRef.current.length; i++) {
         const point = pointsRef.current[i];
         ctx.beginPath();
@@ -104,7 +123,6 @@ export function CursorTrail() {
         ctx.fillStyle = `rgba(33, 150, 243, ${point.alpha})`;
         ctx.fill();
 
-        // Fade out points slowly
         point.alpha = Math.max(0.2, point.alpha - 0.001);
       }
 
@@ -147,6 +165,10 @@ export function CursorTrail() {
           </CardHeader>
           <CardContent className="p-4 pt-0">
             <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span>Human Score:</span>
+                <span>{(metrics.humanScore * 100).toFixed(1)}%</span>
+              </div>
               <div className="flex justify-between">
                 <span>Naturalness:</span>
                 <span>{(metrics.naturalness * 100).toFixed(1)}%</span>

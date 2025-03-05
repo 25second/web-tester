@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,7 +12,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { formAnalyzer } from "@/lib/formAnalysis";
+import { Progress } from "@/components/ui/progress";
 
 const stepOneSchema = z.object({
   firstName: z.string().min(2, "First name is too short"),
@@ -36,6 +38,12 @@ type FormData = z.infer<typeof stepOneSchema> &
 export function MultiStepForm() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<Partial<FormData>>({});
+  const [formMetrics, setFormMetrics] = useState({
+    averageTimePerField: 0,
+    correctionRate: 0,
+    backspaceRate: 0,
+    naturalness: 1
+  });
 
   const form = useForm<Partial<FormData>>({
     resolver: zodResolver(
@@ -48,18 +56,45 @@ export function MultiStepForm() {
     defaultValues: formData,
   });
 
+  useEffect(() => {
+    // Reset form analyzer when form is reset
+    return () => {
+      formAnalyzer.reset();
+    };
+  }, []);
+
   const onSubmit = (data: Partial<FormData>) => {
     const newFormData = { ...formData, ...data };
     setFormData(newFormData);
+
+    // Analyze form behavior before moving to next step
+    const metrics = formAnalyzer.analyzeFormBehavior();
+    setFormMetrics(metrics);
 
     if (step < 3) {
       setStep(step + 1);
     } else {
       console.log("Final form data:", newFormData);
+      console.log("Form behavior metrics:", metrics);
       // Reset form
       setStep(1);
       setFormData({});
       form.reset();
+      formAnalyzer.reset();
+    }
+  };
+
+  const handleInputFocus = (fieldName: string) => {
+    formAnalyzer.startFieldTracking(fieldName);
+  };
+
+  const handleInputBlur = (fieldName: string) => {
+    formAnalyzer.endFieldTracking(fieldName);
+  };
+
+  const handleKeyDown = (fieldName: string, event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Backspace') {
+      formAnalyzer.recordBackspace(fieldName);
     }
   };
 
@@ -67,6 +102,16 @@ export function MultiStepForm() {
     <Card>
       <CardHeader>
         <CardTitle>Multi-step Form (Step {step} of 3)</CardTitle>
+        <CardDescription>
+          Form Behavior Analysis
+        </CardDescription>
+        <div className="space-y-2 mt-2">
+          <div className="flex justify-between text-sm">
+            <span>Naturalness Score:</span>
+            <span>{(formMetrics.naturalness * 100).toFixed(1)}%</span>
+          </div>
+          <Progress value={formMetrics.naturalness * 100} />
+        </div>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -80,7 +125,12 @@ export function MultiStepForm() {
                     <FormItem>
                       <FormLabel>First Name</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input 
+                          {...field}
+                          onFocus={() => handleInputFocus('firstName')}
+                          onBlur={() => handleInputBlur('firstName')}
+                          onKeyDown={(e) => handleKeyDown('firstName', e)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -93,7 +143,12 @@ export function MultiStepForm() {
                     <FormItem>
                       <FormLabel>Last Name</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input 
+                          {...field}
+                          onFocus={() => handleInputFocus('lastName')}
+                          onBlur={() => handleInputBlur('lastName')}
+                          onKeyDown={(e) => handleKeyDown('lastName', e)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -111,7 +166,13 @@ export function MultiStepForm() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input type="email" {...field} />
+                        <Input 
+                          type="email" 
+                          {...field}
+                          onFocus={() => handleInputFocus('email')}
+                          onBlur={() => handleInputBlur('email')}
+                          onKeyDown={(e) => handleKeyDown('email', e)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -124,7 +185,13 @@ export function MultiStepForm() {
                     <FormItem>
                       <FormLabel>Phone</FormLabel>
                       <FormControl>
-                        <Input type="tel" {...field} />
+                        <Input 
+                          type="tel" 
+                          {...field}
+                          onFocus={() => handleInputFocus('phone')}
+                          onBlur={() => handleInputBlur('phone')}
+                          onKeyDown={(e) => handleKeyDown('phone', e)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -142,7 +209,12 @@ export function MultiStepForm() {
                     <FormItem>
                       <FormLabel>Address</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input 
+                          {...field}
+                          onFocus={() => handleInputFocus('address')}
+                          onBlur={() => handleInputBlur('address')}
+                          onKeyDown={(e) => handleKeyDown('address', e)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -155,7 +227,12 @@ export function MultiStepForm() {
                     <FormItem>
                       <FormLabel>City</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input 
+                          {...field}
+                          onFocus={() => handleInputFocus('city')}
+                          onBlur={() => handleInputBlur('city')}
+                          onKeyDown={(e) => handleKeyDown('city', e)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

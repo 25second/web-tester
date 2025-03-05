@@ -14,8 +14,16 @@ export class MemStorage implements IStorage {
     const interaction: Interaction = {
       id: currentId++,
       timestamp: new Date(),
-      ...insertInteraction,
+      buttonId: insertInteraction.buttonId,
+      eventType: insertInteraction.eventType,
+      cursorPosition: insertInteraction.cursorPosition || null,
+      cursorVelocity: insertInteraction.cursorVelocity || null,
+      cursorAcceleration: insertInteraction.cursorAcceleration || null,
+      timingData: insertInteraction.timingData || null,
+      behaviorMetrics: insertInteraction.behaviorMetrics || null,
+      metadata: insertInteraction.metadata || null
     };
+
     interactionsData.push(interaction);
     return interaction;
   }

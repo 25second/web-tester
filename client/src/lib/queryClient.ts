@@ -9,12 +9,16 @@ async function throwIfResNotOk(res: Response) {
 
 // Get the base URL for API requests based on the environment
 const getBaseUrl = () => {
-  if (import.meta.env.DEV) {
-    return ''; // In development, use relative URLs
+  // Check for Vercel deployment URL first
+  if (import.meta.env.VITE_VERCEL_URL) {
+    return `https://${import.meta.env.VITE_VERCEL_URL}`;
   }
-  return import.meta.env.VITE_VERCEL_URL 
-    ? `https://${import.meta.env.VITE_VERCEL_URL}` 
-    : ''; // In production on Vercel
+  // For local development
+  if (import.meta.env.DEV) {
+    return '';
+  }
+  // Fallback to relative path
+  return '';
 };
 
 export async function apiRequest(
@@ -24,6 +28,8 @@ export async function apiRequest(
 ): Promise<Response> {
   const baseUrl = getBaseUrl();
   const fullUrl = `${baseUrl}${url}`;
+
+  console.log('Making API request to:', fullUrl); // Debug log
 
   const res = await fetch(fullUrl, {
     method,
@@ -44,6 +50,8 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const baseUrl = getBaseUrl();
     const fullUrl = `${baseUrl}${queryKey[0]}`;
+
+    console.log('Making query to:', fullUrl); // Debug log
 
     const res = await fetch(fullUrl, {
       credentials: "include",

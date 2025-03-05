@@ -16,6 +16,7 @@ interface Point {
   y: number;
   alpha: number;
   timestamp: number;
+  isClick?: boolean;
 }
 
 export function CursorTrail() {
@@ -68,7 +69,8 @@ export function CursorTrail() {
         x: e.clientX,
         y: e.clientY,
         alpha: 1,
-        timestamp
+        timestamp,
+        isClick: false
       });
     };
 
@@ -89,7 +91,8 @@ export function CursorTrail() {
         x: e.clientX,
         y: e.clientY,
         alpha: 1,
-        timestamp
+        timestamp,
+        isClick: true
       });
     };
 
@@ -119,11 +122,29 @@ export function CursorTrail() {
       for (let i = 0; i < pointsRef.current.length; i++) {
         const point = pointsRef.current[i];
         ctx.beginPath();
-        ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(33, 150, 243, ${point.alpha})`;
+
+        if (point.isClick) {
+          // Большой красный круг для клика
+          ctx.arc(point.x, point.y, 8, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 0, 0, ${point.alpha})`;
+
+          // Добавляем обводку для большей заметности
+          ctx.strokeStyle = `rgba(255, 255, 255, ${point.alpha})`;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        } else {
+          // Обычная точка траектории
+          ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(33, 150, 243, ${point.alpha})`;
+        }
+
         ctx.fill();
 
-        point.alpha = Math.max(0.2, point.alpha - 0.001);
+        // Разная скорость затухания для кликов и обычных точек
+        point.alpha = Math.max(
+          0.2,
+          point.alpha - (point.isClick ? 0.002 : 0.001)
+        );
       }
 
       requestAnimationFrame(animate);

@@ -48,15 +48,15 @@ export function CursorTrail() {
     if (!ctx) return;
 
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      canvas.width = document.documentElement.scrollWidth;
+      canvas.height = document.documentElement.scrollHeight;
     };
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!isRecording) return;
 
       const timestamp = Date.now();
-      behaviorAnalyzer.addPoint(e.clientX, e.clientY, timestamp);
+      behaviorAnalyzer.addPoint(e.pageX, e.pageY, timestamp);
       const newBehaviorMetrics = behaviorAnalyzer.analyzeBehavior();
       const humanScore = botDetector.calculateHumanScore();
 
@@ -66,8 +66,8 @@ export function CursorTrail() {
       });
 
       pointsRef.current.push({
-        x: e.clientX,
-        y: e.clientY,
+        x: e.pageX,
+        y: e.pageY,
         alpha: 1,
         timestamp,
         isClick: false
@@ -78,7 +78,7 @@ export function CursorTrail() {
       if (!isRecording) return;
 
       const timestamp = Date.now();
-      behaviorAnalyzer.addPoint(e.clientX, e.clientY, timestamp);
+      behaviorAnalyzer.addPoint(e.pageX, e.pageY, timestamp);
       const newBehaviorMetrics = behaviorAnalyzer.analyzeBehavior();
       const humanScore = botDetector.calculateHumanScore();
 
@@ -88,12 +88,16 @@ export function CursorTrail() {
       });
 
       pointsRef.current.push({
-        x: e.clientX,
-        y: e.clientY,
+        x: e.pageX,
+        y: e.pageY,
         alpha: 1,
         timestamp,
         isClick: true
       });
+    };
+
+    const handleScroll = () => {
+      resizeCanvas();
     };
 
     const animate = () => {
@@ -124,23 +128,19 @@ export function CursorTrail() {
         ctx.beginPath();
 
         if (point.isClick) {
-          // Большой красный круг для клика
           ctx.arc(point.x, point.y, 8, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(255, 0, 0, ${point.alpha})`;
 
-          // Добавляем обводку для большей заметности
           ctx.strokeStyle = `rgba(255, 255, 255, ${point.alpha})`;
           ctx.lineWidth = 2;
           ctx.stroke();
         } else {
-          // Обычная точка траектории
           ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(33, 150, 243, ${point.alpha})`;
         }
 
         ctx.fill();
 
-        // Разная скорость затухания для кликов и обычных точек
         point.alpha = Math.max(
           0.2,
           point.alpha - (point.isClick ? 0.002 : 0.001)
@@ -151,6 +151,7 @@ export function CursorTrail() {
     };
 
     window.addEventListener("resize", resizeCanvas);
+    window.addEventListener("scroll", handleScroll);
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("click", handleClick);
     resizeCanvas();
@@ -158,6 +159,7 @@ export function CursorTrail() {
 
     return () => {
       window.removeEventListener("resize", resizeCanvas);
+      window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("click", handleClick);
     };

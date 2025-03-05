@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
@@ -6,12 +6,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2 } from "lucide-react";
+import { behaviorAnalyzer } from "@/lib/behaviorAnalysis";
 
 export function ButtonCollection() {
   const [loading, setLoading] = useState(false);
   const [switched, setSwitched] = useState(false);
   const [sliderValue, setSliderValue] = useState([50]);
   const { toast } = useToast();
+  const lastInteractionTime = useRef<number>(Date.now());
 
   const interactionMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -20,16 +22,34 @@ export function ButtonCollection() {
   });
 
   const logInteraction = async (buttonId: string, eventType: string, e: React.MouseEvent) => {
+    const currentTime = Date.now();
+    const timeSinceLastInteraction = currentTime - lastInteractionTime.current;
+    lastInteractionTime.current = currentTime;
+
     const rect = (e.target as HTMLElement).getBoundingClientRect();
     const cursorPosition = {
       x: e.clientX - rect.left,
       y: e.clientY - rect.top
     };
 
+    // Add point to behavior analyzer
+    behaviorAnalyzer.addPoint(e.clientX, e.clientY, currentTime);
+    const behaviorMetrics = behaviorAnalyzer.analyzeBehavior();
+
+    const velocity = behaviorAnalyzer.calculateVelocity();
+    const acceleration = behaviorAnalyzer.calculateAcceleration();
+
     await interactionMutation.mutateAsync({
       buttonId,
       eventType,
       cursorPosition,
+      cursorVelocity: velocity,
+      cursorAcceleration: acceleration,
+      timingData: {
+        timeStamp: currentTime,
+        timeSinceLastInteraction
+      },
+      behaviorMetrics,
       metadata: { timestamp: new Date() }
     });
   };

@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Eraser } from "lucide-react";
+import { Eraser, Activity } from "lucide-react";
+import { behaviorAnalyzer } from "@/lib/behaviorAnalysis";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 interface Point {
   x: number;
@@ -13,6 +21,11 @@ export function CursorTrail() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pointsRef = useRef<Point[]>([]);
   const [isRecording, setIsRecording] = useState(true);
+  const [metrics, setMetrics] = useState({
+    naturalness: 1,
+    jitterAmount: 0,
+    pathEfficiency: 1
+  });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -29,23 +42,32 @@ export function CursorTrail() {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isRecording) return;
 
+      const timestamp = Date.now();
+      behaviorAnalyzer.addPoint(e.clientX, e.clientY, timestamp);
+      const newMetrics = behaviorAnalyzer.analyzeBehavior();
+      setMetrics(newMetrics);
+
       pointsRef.current.push({
         x: e.clientX,
         y: e.clientY,
         alpha: 1,
-        timestamp: Date.now()
+        timestamp
       });
     };
 
     const handleClick = (e: MouseEvent) => {
       if (!isRecording) return;
 
-      // Add a larger point for clicks
+      const timestamp = Date.now();
+      behaviorAnalyzer.addPoint(e.clientX, e.clientY, timestamp);
+      const newMetrics = behaviorAnalyzer.analyzeBehavior();
+      setMetrics(newMetrics);
+
       pointsRef.current.push({
         x: e.clientX,
         y: e.clientY,
         alpha: 1,
-        timestamp: Date.now()
+        timestamp
       });
     };
 
@@ -112,7 +134,34 @@ export function CursorTrail() {
         ref={canvasRef}
         className="fixed inset-0 pointer-events-none z-50"
       />
-      <div className="fixed bottom-4 right-4 z-50 flex gap-2">
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+        <Card className="w-64 bg-background/80 backdrop-blur-sm">
+          <CardHeader className="p-4">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              Behavior Metrics
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Real-time interaction analysis
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span>Naturalness:</span>
+                <span>{(metrics.naturalness * 100).toFixed(1)}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Path Efficiency:</span>
+                <span>{(metrics.pathEfficiency * 100).toFixed(1)}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Jitter Amount:</span>
+                <span>{metrics.jitterAmount.toFixed(3)}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         <Button
           variant="outline"
           size="sm"

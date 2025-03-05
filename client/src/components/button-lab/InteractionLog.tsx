@@ -24,16 +24,18 @@ export function InteractionLog() {
           interactions.map((interaction) => (
             <div
               key={interaction.id}
-              className="flex items-center justify-between border-b pb-2"
+              className="flex items-center justify-between border-b pb-2 last:border-b-0"
             >
-              <div className="flex flex-col">
+              <div className="flex flex-col gap-1">
                 <span className="text-sm font-medium">
                   {interaction.buttonId} - {interaction.eventType}
                 </span>
-                <span className="text-xs text-muted-foreground">
-                  Position: ({Math.round(interaction.cursorPosition?.x ?? 0)}, 
-                  {Math.round(interaction.cursorPosition?.y ?? 0)})
-                </span>
+                {interaction.cursorPosition && (
+                  <span className="text-xs text-muted-foreground">
+                    Position: ({Math.round(interaction.cursorPosition.x)}, 
+                    {Math.round(interaction.cursorPosition.y)})
+                  </span>
+                )}
               </div>
               <span className="text-xs text-muted-foreground">
                 {format(new Date(interaction.timestamp), "HH:mm:ss")}

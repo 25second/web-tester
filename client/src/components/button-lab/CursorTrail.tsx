@@ -52,21 +52,11 @@ export function CursorTrail() {
       canvas.height = window.innerHeight;
     };
 
-    const getViewportCoordinates = (e: MouseEvent) => {
-      // Convert page coordinates to viewport coordinates
-      return {
-        x: e.clientX,
-        y: e.clientY
-      };
-    };
-
     const handleMouseMove = (e: MouseEvent) => {
       if (!isRecording) return;
 
       const timestamp = Date.now();
-      const coords = getViewportCoordinates(e);
-
-      behaviorAnalyzer.addPoint(coords.x, coords.y, timestamp);
+      behaviorAnalyzer.addPoint(e.clientX, e.clientY, timestamp);
       const newBehaviorMetrics = behaviorAnalyzer.analyzeBehavior();
       const humanScore = botDetector.calculateHumanScore();
 
@@ -76,8 +66,8 @@ export function CursorTrail() {
       });
 
       pointsRef.current.push({
-        x: coords.x,
-        y: coords.y,
+        x: e.clientX,
+        y: e.clientY,
         alpha: 1,
         timestamp,
         isClick: false
@@ -88,9 +78,7 @@ export function CursorTrail() {
       if (!isRecording) return;
 
       const timestamp = Date.now();
-      const coords = getViewportCoordinates(e);
-
-      behaviorAnalyzer.addPoint(coords.x, coords.y, timestamp);
+      behaviorAnalyzer.addPoint(e.clientX, e.clientY, timestamp);
       const newBehaviorMetrics = behaviorAnalyzer.analyzeBehavior();
       const humanScore = botDetector.calculateHumanScore();
 
@@ -100,8 +88,8 @@ export function CursorTrail() {
       });
 
       pointsRef.current.push({
-        x: coords.x,
-        y: coords.y,
+        x: e.clientX,
+        y: e.clientY,
         alpha: 1,
         timestamp,
         isClick: true
@@ -179,13 +167,16 @@ export function CursorTrail() {
     <>
       <canvas
         ref={canvasRef}
-        className="fixed inset-0 pointer-events-none z-50"
         style={{
           position: 'fixed',
           top: 0,
           left: 0,
+          right: 0,
+          bottom: 0,
           pointerEvents: 'none',
-          zIndex: 50
+          zIndex: 50,
+          width: '100vw',
+          height: '100vh'
         }}
       />
       <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">

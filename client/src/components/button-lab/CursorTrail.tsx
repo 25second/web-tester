@@ -31,7 +31,6 @@ export function CursorTrail() {
   });
 
   useEffect(() => {
-    // Initialize bot detection
     botDetector.initialize().then(() => {
       setMetrics(prev => ({
         ...prev,
@@ -47,7 +46,10 @@ export function CursorTrail() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const resizeCanvas = () => {
+    const updateCanvasSize = () => {
+      // Set both the canvas element size and drawing surface size
+      canvas.style.width = '100vw';
+      canvas.style.height = '100vh';
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     };
@@ -97,6 +99,8 @@ export function CursorTrail() {
     };
 
     const animate = () => {
+      if (!ctx || !canvas) return;
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (pointsRef.current.length > 1) {
@@ -146,14 +150,14 @@ export function CursorTrail() {
       requestAnimationFrame(animate);
     };
 
-    window.addEventListener("resize", resizeCanvas);
+    window.addEventListener("resize", updateCanvasSize);
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("click", handleClick);
-    resizeCanvas();
+    updateCanvasSize();
     animate();
 
     return () => {
-      window.removeEventListener("resize", resizeCanvas);
+      window.removeEventListener("resize", updateCanvasSize);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("click", handleClick);
     };

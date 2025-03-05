@@ -47,9 +47,6 @@ export function CursorTrail() {
     if (!ctx) return;
 
     const updateCanvasSize = () => {
-      // Set both the canvas element size and drawing surface size
-      canvas.style.width = '100vw';
-      canvas.style.height = '100vh';
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     };
@@ -169,20 +166,27 @@ export function CursorTrail() {
 
   return (
     <>
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          pointerEvents: 'none',
-          zIndex: 50,
-          width: '100vw',
-          height: '100vh'
-        }}
-      />
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 999,
+        pointerEvents: 'none',
+        transform: 'translateZ(0)'
+      }}>
+        <canvas
+          ref={canvasRef}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%'
+          }}
+        />
+      </div>
       <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
         <Card className="w-64 bg-background/80 backdrop-blur-sm">
           <CardHeader className="p-4">
